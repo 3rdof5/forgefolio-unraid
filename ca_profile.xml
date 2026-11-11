@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<!-- Forgefolio's Community Applications maintainer profile. The CA submission
+     flow requires this file (with a non-empty Overview) in the public
+     repository that carries the templates. The Support link points at the
+     Unraid forums thread that gets created with the submission — update it
+     with the real thread URL if it changes. -->
+<Profile>
+  <Overview>Self-hosted 3D-print workshop apps by 3rdof5 — currently Forgefolio: a project-first model library, kit imports with folder trees and gear lists, plated assemblies with exploded views and printable BOMs, Bambu color rendering, and verified slicer deep links. One container, your storage, no cloud.</Overview>
+  <Support>https://github.com/3rdof5/Forgefolio/issues</Support>
+  <Project>https://github.com/3rdof5/Forgefolio</Project>
+  <Icon>https://raw.githubusercontent.com/3rdof5/Forgefolio/main/assets/icon.png</Icon>
+</Profile>

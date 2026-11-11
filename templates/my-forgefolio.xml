@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<!-- Forgefolio's canonical manual Unraid user-template (my-...xml), authored
+     per the unraid-app-builder conventions: ONE manual-install artifact, both
+     legacy sections and v2 Config entries (dockerMan edit/update behaves
+     best with both), the host port and appdata path user-editable, and
+     PUID/PGID/UMASK for the household account that owns the files. -->
+<Container version="2">
+  <Name>Forgefolio</Name>
+  <Description>A self-hosted 3D-print workshop: project-first model library, folder-aware kit imports, plated assemblies, gear lists, and Bambu color rendering — your files, your machine.</Description>
+  <Overview>
+Forgefolio is a self-hosted 3D printing project and assembly manager. One container serves the whole app: a React frontend through nginx, and the FastAPI backend with SQLite persistence behind it.
+
+Your data splits across two folders: the SQLite database (small — keep it in appdata on the cache pool) and the models library (every uploaded model file and thumbnail, companion documents, and the in-app backup snapshots the admin takes from Backup &amp; Snapshots — big, and worth pointing at a share on the array if your cache pool is small). Both paths are editable below.
+
+First run: create the administrator from the Unraid terminal with
+  docker exec -it Forgefolio python -m app.cli create-admin --username YOUR_NAME
+(12+ character password at the hidden prompts; existing files are assigned to that first admin). Scripts and terminals without a TTY can pass the password on stdin instead:
+  echo "YOUR_PASSWORD" | docker exec -i Forgefolio python -m app.cli create-admin --username YOUR_NAME --password-stdin
+
+Sign-in note: for plain-HTTP LAN access leave COOKIE_SECURE at false (the default here). Turn it on only when the app is served behind HTTPS — Secure cookies are refused by browsers over plain HTTP, which reads as "sign-in doesn't work".
+  </Overview>
+  <Category>MediaApp:Other Status:Stable</Category>
+  <License>MIT — https://raw.githubusercontent.com/3rdof5/forgefolio-unraid/main/LICENSE</License>
+  <Repository>ghcr.io/3rdof5/forgefolio:latest</Repository>
+  <Registry>https://github.com/3rdof5/Forgefolio/pkgs/container/forgefolio</Registry>
+  <Support>https://github.com/3rdof5/Forgefolio/issues</Support>
+  <Project>https://github.com/3rdof5/Forgefolio</Project>
+  <TemplateURL>https://raw.githubusercontent.com/3rdof5/forgefolio-unraid/main/templates/my-forgefolio.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/3rdof5/forgefolio-unraid/main/assets/icon.png</Icon>
+  <WebUI>http://[IP]:[PORT:80]/</WebUI>
+  <Network>bridge</Network>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Networking>
+    <Mode>bridge</Mode>
+    <Publish>
+      <Port>
+        <HostPort>8080</HostPort>
+        <ContainerPort>80</ContainerPort>
+        <Protocol>tcp</Protocol>
+      </Port>
+    </Publish>
+  </Networking>
+  <Data>
+    <Volume>
+      <HostDir>/mnt/user/appdata/forgefolio</HostDir>
+      <ContainerDir>/config</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+    <Volume>
+      <HostDir>/mnt/user/appdata/forgefolio/models</HostDir>
+      <ContainerDir>/models</ContainerDir>
+      <Mode>rw</Mode>
+    </Volume>
+  </Data>
+  <Environment>
+    <Variable>
+      <Name>PUID</Name>
+      <Value>99</Value>
+    </Variable>
+    <Variable>
+      <Name>PGID</Name>
+      <Value>100</Value>
+    </Variable>
+    <Variable>
+      <Name>UMASK</Name>
+      <Value>022</Value>
+    </Variable>
+    <Variable>
+      <Name>UPLOAD_DIR</Name>
+      <Value>/models</Value>
+    </Variable>
+    <Variable>
+      <Name>CORS_ORIGINS</Name>
+      <Value></Value>
+    </Variable>
+    <Variable>
+      <Name>COOKIE_SECURE</Name>
+      <Value>false</Value>
+    </Variable>
+    <Variable>
+      <Name>UPLOAD_MAX_BYTES</Name>
+      <Value>1073741824</Value>
+    </Variable>
+  </Environment>
+  <Config Name="WebUI Port" Target="80" Default="8080" Mode="http" Type="Port" Description="The host port Unraid uses for the Forgefolio WebUI shortcut — the app's only port; nothing else needs publishing." Display="always" Required="true" Mask="false">8080</Config>
+  <Config Name="Appdata" Target="/config" Default="/mnt/user/appdata/forgefolio" Mode="rw" Type="Path" Description="Forgefolio's database root — just the SQLite file (small). Keep it on a cache-backed share for speed." Display="always" Required="true" Mask="false">/mnt/user/appdata/forgefolio</Config>
+  <Config Name="Models library" Target="/models" Default="/mnt/user/appdata/forgefolio/models" Mode="rw" Type="Path" Description="Where your model library lives: model files, thumbnails, companion documents, and in-app backups. Defaults inside appdata; point it at a dedicated share on the array if your cache pool is small. Forgefolio takes ownership of this folder for the PUID account — use a share dedicated to the library." Display="always" Required="true" Mask="false">/mnt/user/appdata/forgefolio/models</Config>
+  <Config Name="PUID" Target="PUID" Default="99" Mode="" Type="Variable" Description="The NAS account that owns Forgefolio's files. Unraid's default share user is 99 (nobody); check with 'id youruser' in the terminal." Display="always" Required="false" Mask="false">99</Config>
+  <Config Name="PGID" Target="PGID" Default="100" Mode="" Type="Variable" Description="The group id that owns Forgefolio's files. Unraid's default share group is 100 (users)." Display="always" Required="false" Mask="false">100</Config>
+  <Config Name="UMASK" Target="UMASK" Default="022" Mode="" Type="Variable" Description="The file-creation mask for new files (022 = owner writes, everyone reads). Only change if your share setup needs it." Display="advanced" Required="false" Mask="false">022</Config>
+  <Config Name="Upload directory" Target="UPLOAD_DIR" Default="/models" Mode="" Type="Variable" Description="Where the app looks for its library inside the container — /models, the Models library path above. Leave it alone unless you also changed that path's container side." Display="advanced" Required="false" Mask="false">/models</Config>
+  <Config Name="Allowed extra origins" Target="CORS_ORIGINS" Default="" Mode="" Type="Variable" Description="Additional browser origins for cross-origin setups only — the app's own address (whatever IP:port you browse it at) is always allowed. Leave empty for normal use; comma-separate extras (e.g. an external reverse-proxy address)." Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="COOKIE_SECURE" Target="COOKIE_SECURE" Default="false" Mode="" Type="Variable" Description="Send Secure session cookies. Leave false for plain-HTTP LAN use; set true ONLY behind HTTPS (a reverse proxy), or browsers refuse the cookie and sign-in silently fails." Display="advanced" Required="false" Mask="false">false</Config>
+  <Config Name="Upload size cap" Target="UPLOAD_MAX_BYTES" Default="1073741824" Mode="" Type="Variable" Description="Largest accepted upload in bytes — default 1 GiB, headroom for big kit ZIPs." Display="advanced" Required="false" Mask="false">1073741824</Config>
+</Container>
